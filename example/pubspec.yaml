@@ -24,6 +24,9 @@ dev_dependencies:
   social_share:
     path: ../
 
+dependency_overrides:
+  platform: ^3.1.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

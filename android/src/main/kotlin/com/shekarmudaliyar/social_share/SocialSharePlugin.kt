@@ -18,6 +18,8 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
+import com.facebook.share.model.ShareLinkContent
+import com.facebook.share.widget.ShareDialog
 
 class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -121,6 +123,16 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             } else {
                 result.success("error")
             }
+        } else if (call.method == "shareFacebook") {
+            val url: String? = call.argument("url")
+            val shareDialog = ShareDialog(activity!!)
+            // this part is optional
+            val content = ShareLinkContent.Builder()
+                .setContentUrl(Uri.parse(url))
+                .build()
+            if (ShareDialog.canShow(ShareLinkContent::class.java)) {
+                shareDialog.show(content,ShareDialog.Mode.NATIVE)
+                result.success("success")
         } else if (call.method == "shareOptions") {
             //native share options
             val content: String? = call.argument("content")

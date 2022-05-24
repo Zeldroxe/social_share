@@ -9,29 +9,18 @@ class SocialShare {
   static const MethodChannel _channel = const MethodChannel('social_share');
 
   static Future<String?> shareInstagramStory(
-      String imagePath, {
-        String? backgroundTopColor,
-        String? backgroundBottomColor,
-        String? attributionURL,
-        String? backgroundImagePath,
-      }) async {
+    String imagePath, {
+    String? backgroundTopColor,
+    String? backgroundBottomColor,
+    String? attributionURL,
+    String? backgroundImagePath,
+  }) async {
     Map<String, dynamic> args;
     if (Platform.isIOS) {
       if (backgroundImagePath == null) {
-        args = <String, dynamic>{
-          "stickerImage": imagePath,
-          "backgroundTopColor": backgroundTopColor,
-          "backgroundBottomColor": backgroundBottomColor,
-          "attributionURL": attributionURL
-        };
+        args = <String, dynamic>{"stickerImage": imagePath, "backgroundTopColor": backgroundTopColor, "backgroundBottomColor": backgroundBottomColor, "attributionURL": attributionURL};
       } else {
-        args = <String, dynamic>{
-          "stickerImage": imagePath,
-          "backgroundImage": backgroundImagePath,
-          "backgroundTopColor": backgroundTopColor,
-          "backgroundBottomColor": backgroundBottomColor,
-          "attributionURL": attributionURL
-        };
+        args = <String, dynamic>{"stickerImage": imagePath, "backgroundImage": backgroundImagePath, "backgroundTopColor": backgroundTopColor, "backgroundBottomColor": backgroundBottomColor, "attributionURL": attributionURL};
       }
     } else {
       final tempDir = await getTemporaryDirectory();
@@ -100,12 +89,7 @@ class SocialShare {
     return response;
   }
 
-  static Future<String?> shareFacebookStory(
-      String imagePath,
-      String backgroundTopColor,
-      String backgroundBottomColor,
-      String attributionURL,
-      {String? appId}) async {
+  static Future<String?> shareFacebookStory(String imagePath, String backgroundTopColor, String backgroundBottomColor, String attributionURL, {String? appId}) async {
     Map<String, dynamic> args;
     if (Platform.isIOS) {
       args = <String, dynamic>{
@@ -124,21 +108,50 @@ class SocialShare {
       final stickerAssetPath = '${tempDir.path}/$stickerAssetName';
       file = await File(stickerAssetPath).create();
       file.writeAsBytesSync(stickerAssetAsList);
-      args = <String, dynamic>{
-        "stickerImage": stickerAssetName,
-        "backgroundTopColor": backgroundTopColor,
-        "backgroundBottomColor": backgroundBottomColor,
-        "attributionURL": attributionURL,
-        "appId": appId
-      };
+      args = <String, dynamic>{"stickerImage": stickerAssetName, "backgroundTopColor": backgroundTopColor, "backgroundBottomColor": backgroundBottomColor, "attributionURL": attributionURL, "appId": appId};
     }
-    final String? response =
-    await _channel.invokeMethod('shareFacebookStory', args);
+    final String? response = await _channel.invokeMethod('shareFacebookStory', args);
     return response;
   }
 
-  static Future<String?> shareTwitter(String captionText,
-      {List<String>? hashtags, String? url, String? trailingText}) async {
+  static Future<String?> shareFacebookFeed(String imagePath) async {
+    Map<String, dynamic> args;
+    if (Platform.isIOS) {
+      args = <String, dynamic>{
+        "imagePath": imagePath,
+      };
+    } else {
+      final tempDir = await getTemporaryDirectory();
+
+      File file = File(imagePath);
+      Uint8List bytes = file.readAsBytesSync();
+      var stickerData = bytes.buffer.asUint8List();
+      String stickerAssetName = 'stickerAsset.png';
+      final Uint8List stickerAssetAsList = stickerData;
+      final stickerAssetPath = '${tempDir.path}/$stickerAssetName';
+      file = await File(stickerAssetPath).create();
+      file.writeAsBytesSync(stickerAssetAsList);
+
+      args = <String, dynamic>{
+        "imagePath": stickerAssetName,
+      };
+    }
+    final String? response = await _channel.invokeMethod(
+      'shareInstagramFeed',
+      args,
+    );
+    return response;
+  }
+
+  static Future<String?> shareFacebook(String? url) async {
+    Map<String, dynamic> args = {
+      'url': url,
+    };
+    final String? response = await _channel.invokeMethod('shareFacebook', args);
+    return response;
+  }
+
+  static Future<String?> shareTwitter(String captionText, {List<String>? hashtags, String? url, String? trailingText}) async {
     Map<String, dynamic> args;
     String modifiedUrl;
     if (Platform.isAndroid) {
@@ -151,24 +164,15 @@ class SocialShare {
       hashtags.forEach((f) {
         tags += ("%23" + f.toString() + " ").toString();
       });
-      args = <String, dynamic>{
-        "captionText": captionText + "\n" + tags.toString(),
-        "url": modifiedUrl,
-        "trailingText": trailingText ?? ''
-      };
+      args = <String, dynamic>{"captionText": captionText + "\n" + tags.toString(), "url": modifiedUrl, "trailingText": trailingText ?? ''};
     } else {
-      args = <String, dynamic>{
-        "captionText": captionText + " ",
-        "url": modifiedUrl,
-        "trailingText": trailingText ?? ''
-      };
+      args = <String, dynamic>{"captionText": captionText + " ", "url": modifiedUrl, "trailingText": trailingText ?? ''};
     }
     final String? version = await _channel.invokeMethod('shareTwitter', args);
     return version;
   }
 
-  static Future<String?> shareSms(String message,
-      {String? url, String? trailingText}) async {
+  static Future<String?> shareSms(String message, {String? url, String? trailingText}) async {
     Map<String, dynamic>? args;
     if (Platform.isIOS) {
       if (url == null) {
@@ -176,11 +180,7 @@ class SocialShare {
           "message": message,
         };
       } else {
-        args = <String, dynamic>{
-          "message": message + " ",
-          "urlLink": Uri.parse(url).toString(),
-          "trailingText": trailingText
-        };
+        args = <String, dynamic>{"message": message + " ", "urlLink": Uri.parse(url).toString(), "trailingText": trailingText};
       }
     } else if (Platform.isAndroid) {
       args = <String, dynamic>{
@@ -192,15 +192,12 @@ class SocialShare {
   }
 
   static Future<bool?> copyToClipboard(content) async {
-    final Map<String, String> args = <String, String>{
-      "content": content.toString()
-    };
+    final Map<String, String> args = <String, String>{"content": content.toString()};
     final bool? response = await _channel.invokeMethod('copyToClipboard', args);
     return response;
   }
 
-  static Future<bool?> shareOptions(String contentText,
-      {String? imagePath}) async {
+  static Future<bool?> shareOptions(String contentText, {String? imagePath}) async {
     Map<String, dynamic> args;
     if (Platform.isIOS) {
       args = <String, dynamic>{"image": imagePath, "content": contentText};
