@@ -114,36 +114,7 @@ class SocialShare {
     return response;
   }
 
-  static Future<String?> shareFacebookFeed(String imagePath) async {
-    Map<String, dynamic> args;
-    if (Platform.isIOS) {
-      args = <String, dynamic>{
-        "imagePath": imagePath,
-      };
-    } else {
-      final tempDir = await getTemporaryDirectory();
-
-      File file = File(imagePath);
-      Uint8List bytes = file.readAsBytesSync();
-      var stickerData = bytes.buffer.asUint8List();
-      String stickerAssetName = 'stickerAsset.png';
-      final Uint8List stickerAssetAsList = stickerData;
-      final stickerAssetPath = '${tempDir.path}/$stickerAssetName';
-      file = await File(stickerAssetPath).create();
-      file.writeAsBytesSync(stickerAssetAsList);
-
-      args = <String, dynamic>{
-        "imagePath": stickerAssetName,
-      };
-    }
-    final String? response = await _channel.invokeMethod(
-      'shareInstagramFeed',
-      args,
-    );
-    return response;
-  }
-
-  static Future<String?> shareFacebook(String? url) async {
+  static Future<String?> shareFacebookFeed(String url) async {
     Map<String, dynamic> args = {
       'url': url,
     };

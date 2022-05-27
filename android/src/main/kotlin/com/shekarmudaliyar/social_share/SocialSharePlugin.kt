@@ -2,6 +2,7 @@ package com.shekarmudaliyar.social_share
 
 import android.app.Activity
 import android.content.*
+import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.net.Uri
@@ -61,7 +62,7 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             intent.putExtra("content_url", attributionURL)
             intent.putExtra("top_background_color", backgroundTopColor)
             intent.putExtra("bottom_background_color", backgroundBottomColor)
-            Log.d("", activity!!.toString())
+
             // Instantiate activity and verify it will resolve implicit intent
             activity!!.grantUriPermission("com.instagram.android", stickerImageFile, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             if (activity!!.packageManager.resolveActivity(intent, 0) != null) {
@@ -71,30 +72,45 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 result.success("error")
             }
         } else if (call.method == "shareInstagramFeed") {
+
             // Create the new Intent using the 'Send' action.
             val backgroundImage: String? = call.argument("imagePath")
             //check if background image is also provided
             val backfile = File(activeContext!!.cacheDir, backgroundImage)
             val backgroundImageFile = FileProvider.getUriForFile(activeContext!!, activeContext!!.applicationContext.packageName + ".com.shekarmudaliyar.social_share", backfile)
+    
+            val intent = Intent()
+            intent.action = Intent.ACTION_SEND
 
-
-            val share = Intent(Intent.ACTION_SEND)
-            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            share.type = "image/*"
-            share.putExtra(Intent.EXTRA_STREAM, backgroundImageFile)
-            val chooserIntent: Intent = Intent.createChooser(share, "Share to")
+            intent.setPackage("com.instagram.android");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.type = "image/*"
+            intent.putExtra(Intent.EXTRA_STREAM, backgroundImageFile)
+            val chooserIntent: Intent = Intent.createChooser(intent, "Share to")
             chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-            // Instantiate activity and verify it will resolve implicit intent
-            activity!!.grantUriPermission("com.instagram.android", backgroundImageFile, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val resInfoList = activity!!.packageManager.queryIntentActivities(
+              chooserIntent, PackageManager.MATCH_DEFAULT_ONLY
+            )
+            resInfoList.forEach { resolveInfo ->
+              val packageName = resolveInfo.activityInfo.packageName
+              
+                activity!!.grantUriPermission(
+                  packageName,
+                  backgroundImageFile,
+                  Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
 
             try {
                 activeContext!!.startActivity(chooserIntent)
-//                startActivity(activeContext!!, chooserIntent, Bundle())
+                //startActivity(activeContext!!, chooserIntent, Bundle())
                 result.success("success")
             } catch (e: Exception) {
                 result.success("error")
             }
+
         } else if (call.method == "shareFacebookStory") {
             //share on facebook story
             val stickerImage: String? = call.argument("stickerImage")
@@ -114,7 +130,7 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             intent.putExtra("content_url", attributionURL)
             intent.putExtra("top_background_color", backgroundTopColor)
             intent.putExtra("bottom_background_color", backgroundBottomColor)
-            Log.d("", activity!!.toString())
+            //Log.d("", activity!!.toString())
             // Instantiate activity and verify it will resolve implicit intent
             activity!!.grantUriPermission("com.facebook.katana", stickerImageFile, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             if (activity!!.packageManager.resolveActivity(intent, 0) != null) {
@@ -133,6 +149,8 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (ShareDialog.canShow(ShareLinkContent::class.java)) {
                 shareDialog.show(content,ShareDialog.Mode.NATIVE)
                 result.success("success")
+            }
+            
         } else if (call.method == "shareOptions") {
             //native share options
             val content: String? = call.argument("content")
@@ -200,7 +218,7 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val url: String? = call.argument("url")
             val trailingText: String? = call.argument("trailingText")
             val urlScheme = "http://www.twitter.com/intent/tweet?text=$text$url$trailingText"
-            Log.d("log", urlScheme)
+            //Log.d("log", urlScheme)
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(urlScheme)
             try {
