@@ -155,7 +155,7 @@
         } else {
             result(@"not supported or no facebook installed");
         }
-    else if ([@"shareFacebook" isEqualToString:call.method]) {
+    } else if ([@"shareFacebook" isEqualToString:call.method]) {
         NSString *urlString = call.arguments[@"url"];
         if (urlString != nil) {
             NSString* urlTextEscaped = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
@@ -299,8 +299,14 @@
         result([NSNumber numberWithBool:YES]);
     } else if ([@"shareWhatsapp" isEqualToString:call.method]) {
         NSString *content = call.arguments[@"content"];
-        NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",content];
-        NSURL * whatsappURL = [NSURL URLWithString:[urlWhats stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        //NSString *message = [content stringWithPercentEscape];
+
+NSString * message = [NSString stringWithFormat:content];
+message =    (NSString*)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(NULL,(CFStringRef) message, NULL,CFSTR("!*'();:@&=+$,/?%#[]"),kCFStringEncodingUTF8));
+
+        NSString * urlWhats = [NSString stringWithFormat:@"whatsapp://send?text=%@",message];
+        NSURL * whatsappURL = [NSURL URLWithString:urlWhats];
+        //NSURL * whatsappURL = [NSURL URLWithString:[urlWhats stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
         if ([[UIApplication sharedApplication] canOpenURL: whatsappURL]) {
             [[UIApplication sharedApplication] openURL: whatsappURL];
             result(@"sharing");
