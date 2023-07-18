@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -192,10 +191,45 @@ class SocialShare {
     return version;
   }
 
-  static Future<String?> shareWhatsapp(String content) async {
-    final Map<String, dynamic> args = <String, dynamic>{"content": content};
-    final String? version = await _channel.invokeMethod('shareWhatsapp', args);
-    return version;
+  static Future<String?> shareWhatsapp(String content, {String? imagePath}) async {
+    print(content);
+    print(imagePath);
+    Map<String, dynamic> args;
+    if (Platform.isIOS) {
+      print("isios");
+      args = <String, dynamic>{
+        "content": content,
+        "imagePath": imagePath,
+      };
+    } else {
+      print("else");
+      final tempDir = await getTemporaryDirectory();
+      String? stickerAssetName;
+      if (imagePath != null) {
+        print("imagePath != null");
+        File file = File(imagePath);
+        Uint8List bytes = file.readAsBytesSync();
+        var stickerData = bytes.buffer.asUint8List();
+        stickerAssetName = 'stickerAsset.png';
+        final Uint8List stickerAssetAsList = stickerData;
+        final stickerAssetPath = '${tempDir.path}/$stickerAssetName';
+        file = await File(stickerAssetPath).create();
+        file.writeAsBytesSync(stickerAssetAsList);
+        print("stickerAssetName");
+        print(stickerAssetName);
+        print("imagePath != null end");
+      }
+      print(stickerAssetName);
+      args = <String, dynamic>{
+        "content": content,
+        "imagePath": imagePath != null ? stickerAssetName : null,
+      };
+    }
+    final String? response = await _channel.invokeMethod(
+      'shareWhatsapp',
+      args,
+    );
+    return response;
   }
 
   static Future<Map?> checkInstalledAppsForShare() async {

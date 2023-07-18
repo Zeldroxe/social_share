@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:async';
 import 'package:screenshot/screenshot.dart';
 import 'package:social_share/social_share.dart';
 
@@ -16,7 +15,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  String? _platformVersion = 'Unknown';
 
   @override
   void initState() {
@@ -25,7 +24,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    String platformVersion;
+    String? platformVersion;
 
     if (!mounted) return;
 
@@ -61,6 +60,8 @@ class _MyAppState extends State<MyApp> {
                     final file = await ImagePicker().pickImage(
                       source: ImageSource.gallery,
                     );
+
+                    if(file == null) return;
                     SocialShare.shareInstagramStory(
                       file.path,
                       backgroundTopColor: "#ffffff",
@@ -77,6 +78,7 @@ class _MyAppState extends State<MyApp> {
                     await screenshotController.capture().then((image) async {
                       final directory = await getApplicationDocumentsDirectory();
                       final file = await File('${directory.path}/temp.png').create();
+                      if(image == null) return;
                       await file.writeAsBytes(image);
 
                       SocialShare.shareInstagramStory(
@@ -97,6 +99,7 @@ class _MyAppState extends State<MyApp> {
                     await screenshotController.capture().then((image) async {
                       final directory = await getApplicationDocumentsDirectory();
                       final file = await File('${directory.path}/temp.png').create();
+                      if(image == null) return;
                       await file.writeAsBytes(image);
                       //facebook appId is mandatory for andorid or else share won't work
                       Platform.isAndroid

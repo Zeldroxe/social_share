@@ -21,6 +21,14 @@ import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import com.facebook.share.model.ShareLinkContent
 import com.facebook.share.widget.ShareDialog
+import android.content.Intent
+
+
+import android.graphics.BitmapFactory
+import java.io.FileOutputStream
+import java.io.BufferedOutputStream
+import java.io.IOException
+
 
 class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -186,18 +194,40 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             clipboard.setPrimaryClip(clip)
             result.success(true)
         } else if (call.method == "shareWhatsapp") {
+
             //shares content on WhatsApp
+            val imagePath: String? = call.argument("imagePath")
             val content: String? = call.argument("content")
-            val whatsappIntent = Intent(Intent.ACTION_SEND)
-            whatsappIntent.type = "text/plain"
-            whatsappIntent.setPackage("com.whatsapp")
-            whatsappIntent.putExtra(Intent.EXTRA_TEXT, content)
-            try {
-                activity!!.startActivity(whatsappIntent)
-                result.success("true")
-            } catch (ex: ActivityNotFoundException) {
-                result.success("false")
+
+
+            val intent = Intent()
+            intent.action = Intent.ACTION_SEND
+            intent.setPackage("com.whatsapp")
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+            if(content != null){
+              intent.putExtra(Intent.EXTRA_TEXT, content)
             }
+
+            if(imagePath != null){
+              val imagefile = File(activeContext!!.cacheDir, imagePath)
+              val imageUri = FileProvider.getUriForFile(activeContext!!, activeContext!!.applicationContext.packageName + ".com.shekarmudaliyar.social_share", imagefile)
+              intent.type = "image/*"
+              intent.putExtra(Intent.EXTRA_STREAM, imageUri)
+              activity!!.grantUriPermission("com.whatsapp", imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+              
+            } else {
+              intent.type = "text/plain"
+            }
+
+            if (activity!!.packageManager.resolveActivity(intent, 0) != null) {
+                activeContext!!.startActivity(intent)
+                result.success("success")
+            } else {
+                result.success("error")
+            }
+
         } else if (call.method == "shareSms") {
             //shares content on sms
             val content: String? = call.argument("message")
