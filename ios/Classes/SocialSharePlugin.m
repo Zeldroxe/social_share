@@ -28,6 +28,9 @@
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:path];
+    NSString *appID = [dict objectForKey:@"FacebookAppID"];
     if ([@"shareInstagramStory" isEqualToString:call.method]) {
         //Sharing story on instagram
         NSString *stickerImage = call.arguments[@"stickerImage"];
@@ -44,7 +47,11 @@
           imgShare = [[UIImage alloc] initWithContentsOfFile:stickerImage];
         }
         //url Scheme for instagram story
-        NSURL *urlScheme = [NSURL URLWithString:@"instagram-stories://share"];
+        //NSURL *urlScheme = [NSURL URLWithString:@"instagram-stories://share"];
+
+        //url Scheme for instagram story
+        NSURL *urlScheme = [NSURL URLWithString:[NSString stringWithFormat:@"instagram-stories://share?source_application=%@", appID]];
+
         //adding data to send to instagram story
         if ([[UIApplication sharedApplication] canOpenURL:urlScheme]) {
            //if instagram is installed and the url can be opened
@@ -97,36 +104,34 @@
            result(@"not supported or no facebook installed");
        }
     } else if ([@"shareInstagramFeed" isEqualToString:call.method]) {
-    NSString *stickerImage = call.arguments[@"imagePath"];
-    NSURL *urlScheme = [NSURL URLWithString:@"instagram://app"];
-     if ([[UIApplication sharedApplication] canOpenURL:urlScheme]) {
-        UIImage *imageToUse = [UIImage imageWithContentsOfFile:stickerImage];
-        [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-            PHAssetChangeRequest *changeRequest = [PHAssetChangeRequest creationRequestForAssetFromImage:imageToUse];
-            NSString *assetPlaceholder = changeRequest.placeholderForCreatedAsset.localIdentifier;
-            NSString *shareURL = [NSString stringWithFormat:@"instagram://library?LocalIdentifier=%@", assetPlaceholder];
-            NSURL *instagramLink = [NSURL URLWithString:shareURL];
-            [[UIApplication sharedApplication] openURL:instagramLink options:@{} completionHandler:nil];
-        } completionHandler:^(BOOL success, NSError *error) {
-            if (success) {
-                result(@"sharing");
-            }
-            else {
-                result(@"write image error");
-            }
-        }];
-      } else {
-          result(@"not supported or no instagram installed");
-      }
+        NSString *stickerImage = call.arguments[@"imagePath"];
+        NSURL *urlScheme = [NSURL URLWithString:@"instagram://app"];
+        if ([[UIApplication sharedApplication] canOpenURL:urlScheme]) {
+            UIImage *imageToUse = [UIImage imageWithContentsOfFile:stickerImage];
+            [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                PHAssetChangeRequest *changeRequest = [PHAssetChangeRequest creationRequestForAssetFromImage:imageToUse];
+                NSString *assetPlaceholder = changeRequest.placeholderForCreatedAsset.localIdentifier;
+                NSString *shareURL = [NSString stringWithFormat:@"instagram://library?LocalIdentifier=%@", assetPlaceholder];
+                NSURL *instagramLink = [NSURL URLWithString:shareURL];
+                [[UIApplication sharedApplication] openURL:instagramLink options:@{} completionHandler:nil];
+            } completionHandler:^(BOOL success, NSError *error) {
+                if (success) {
+                    result(@"sharing");
+                }
+                else {
+                    result(@"write image error");
+                }
+            }];
+        } else {
+            result(@"not supported or no instagram installed");
+        }
 
     } else if ([@"shareFacebookStory" isEqualToString:call.method]) {
         NSString *stickerImage = call.arguments[@"stickerImage"];
         NSString *backgroundTopColor = call.arguments[@"backgroundTopColor"];
         NSString *backgroundBottomColor = call.arguments[@"backgroundBottomColor"];
         NSString *attributionURL = call.arguments[@"attributionURL"];
-        NSString *path = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
-        NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:path];
-        NSString *appID = [dict objectForKey:@"FacebookAppID"];
+      
         NSFileManager *fileManager = [NSFileManager defaultManager];
         BOOL isFileExist = [fileManager fileExistsAtPath: stickerImage];
         UIImage *imgShare;
